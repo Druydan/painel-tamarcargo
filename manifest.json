@@ -1,7 +1,7 @@
 {
   "name": "TAMAR CARGO TRANSPORTES",
   "short_name": "TAMAR CARGO",
-  "id": "/painel-tamarcargo/"
+  "id": "/painel-tamarcargo/",
   "display": "standalone",
   "start_url": ".",
   "background_color": "#00325d",
