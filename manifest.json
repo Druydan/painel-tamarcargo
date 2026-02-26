@@ -4,7 +4,7 @@
   "id": "/painel-tamarcargo/",
   "display": "standalone",
   "start_url": ".",
-  "background_color": "#00325d",
+  "background_color": "#ffffff",
   "theme_color": "#00325d",
   "icons": [
     {
