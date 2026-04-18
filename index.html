@@ -27,57 +27,72 @@
     
     <iframe id="iframe-wms" src="https://script.google.com/macros/s/AKfycbw8ymyRRR-SmraPN0xwRPFQsT-E6vJNOBng51t1DG3CHYNiHUlAEOuvIcVQapaU9OfrDg/exec" allow="camera; microphone"></iframe>
 
+   <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #00325d; font-family: sans-serif; }
+        iframe { width: 100%; height: 100%; border: none; }
+        
+        /* 1. O Fundo Transparente com Desfoque (Efeito de vidro) */
+        #leitor-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); z-index: 9999; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        /* 2. O Card Bonito da Tamar Cargo */
+        #card-camera {
+            background: #ffffff; padding: 20px; border-radius: 16px; width: 85%; max-width: 360px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center;
+        }
+
+        /* 3. O container do vídeo com a borda azul WMS */
+        #leitor-container { 
+            position: relative; width: 100%; border-radius: 12px; overflow: hidden; 
+            border: 3px solid #00325d; background: #000; margin-bottom: 15px;
+        }
+
+        #leitor-qr { width: 100%; min-height: 250px; }
+
+        /* 4. A Linha Laser Verde Animada! */
+        .scan-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 75%; height: 65%; border: 2px solid rgba(255, 255, 255, 0.4); 
+            border-radius: 12px; pointer-events: none; display: flex; align-items: center; justify-content: center;
+        }
+        .scan-line {
+            width: 100%; height: 2px; background: rgba(34, 197, 94, 0.9); 
+            box-shadow: 0 0 10px rgba(34, 197, 94, 1); animation: scanline 2s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-50px); }
+            50% { transform: translateY(50px); }
+            100% { transform: translateY(-50px); }
+        }
+
+        /* 5. Botão Moderno WMS */
+        #btn-fechar { 
+            width: 100%; padding: 12px; background: #ef4444; color: white; 
+            border: none; border-radius: 8px; font-weight: 800; font-size: 14px; 
+            cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+        }
+    </style>
+
     <div id="leitor-overlay">
-        <h3 style="color: white; margin-bottom: 15px;">Aponte para o QR Code</h3>
-        <div id="leitor-container">
-            <div id="leitor-qr"></div>
-        </div>
-        <button id="btn-fechar" onclick="fecharCameraGitHub()">CANCELAR</button>
-    </div>
-
-    <script>
-        let leitorAoVivo = null;
-        let rotaDoGoogle = null; // Vai guardar a rota exata da caixa mais funda
-
-        // Fica escutando as mensagens
-        window.addEventListener("message", function(event) {
-            if (event.data === "ABRIR_CAMERA") {
-                // Guarda a referência de quem chamou para sabermos para onde devolver
-                rotaDoGoogle = event.source; 
-                abrirCameraGitHub();
-            }
-        });
-
-        function abrirCameraGitHub() {
-            document.getElementById('leitor-overlay').style.display = 'flex';
-            if (!leitorAoVivo) leitorAoVivo = new Html5Qrcode("leitor-qr");
+        <div id="card-camera">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #00325d; font-size: 18px; font-weight: 800;">
+                Aponte para o QR Code
+            </h3>
             
-            leitorAoVivo.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 250 } }, 
-                function(codigoLido) {
-                    fecharCameraGitHub();
-                    
-                    // DEVOLVE A INFORMAÇÃO USANDO A ROTA EXATA!
-                    if (rotaDoGoogle) {
-                        rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
-                    }
-                },
-                function(erro) {
-                    // Ignora falhas de foco na imagem
-                }
-            ).catch(err => {
-                alert("Erro ao abrir câmera: Verifique se o site está com HTTPS e se você deu permissão.");
-                fecharCameraGitHub();
-            });
-        }
-
-        function fecharCameraGitHub() {
-            document.getElementById('leitor-overlay').style.display = 'none';
-            if (leitorAoVivo && leitorAoVivo.isScanning) {
-                leitorAoVivo.stop().catch(e => console.log(e));
-            }
-        }
-    </script>
+            <div id="leitor-container">
+                <div id="leitor-qr"></div>
+                
+                <div class="scan-box">
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+            
+            <button id="btn-fechar" onclick="fecharCameraGitHub()">CANCELAR LEITURA</button>
+        </div>
+    </div>
 </body>
 </html>
