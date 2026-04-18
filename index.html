@@ -37,10 +37,13 @@
 
     <script>
         let leitorAoVivo = null;
+        let rotaDoGoogle = null; // Vai guardar a rota exata da caixa mais funda
 
-        // Fica escutando as mensagens que vêm lá de dentro do Iframe (Google Apps Script)
+        // Fica escutando as mensagens
         window.addEventListener("message", function(event) {
             if (event.data === "ABRIR_CAMERA") {
+                // Guarda a referência de quem chamou para sabermos para onde devolver
+                rotaDoGoogle = event.source; 
                 abrirCameraGitHub();
             }
         });
@@ -54,12 +57,17 @@
                 { fps: 10, qrbox: { width: 250, height: 250 } }, 
                 function(codigoLido) {
                     fecharCameraGitHub();
-                    // DEVOLVE A INFORMAÇÃO: Manda o código lido lá pra dentro do iframe do Google!
-                    document.getElementById('iframe-wms').contentWindow.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
+                    
+                    // DEVOLVE A INFORMAÇÃO USANDO A ROTA EXATA!
+                    if (rotaDoGoogle) {
+                        rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
+                    }
                 },
-                function(erro) {}
+                function(erro) {
+                    // Ignora falhas de foco na imagem
+                }
             ).catch(err => {
-                alert("Erro ao abrir câmera no GitHub: " + err);
+                alert("Erro ao abrir câmera: Verifique se o site está com HTTPS e se você deu permissão.");
                 fecharCameraGitHub();
             });
         }
