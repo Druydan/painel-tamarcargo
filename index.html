@@ -8,13 +8,10 @@
     <meta property="og:description" content="Sistema de Gestão Logística">
     <meta property="og:image" content="https://druydan.github.io/painel-tamarcargo/logo.png">
     <meta property="og:type" content="website">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,63 +19,90 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
-        /* SEU ESTILO ORIGINAL DO IFRAME */
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #00325d; font-family: sans-serif; }
+        /* DEFINIÇÃO DE CORES DARK WMS TAMAR CARGO */
+        :root {
+            --bg-dark: #0a0f1e;       /* Fundo profundo */
+            --bg-panel: #111827;     /* Fundo do card/painel */
+            --text-main: #f8fafc;    /* Texto principal (Branco) */
+            --text-muted: #94a3b8;   /* Texto secundário/instrução */
+            --accent-tamar: #3b82f6; /* Azul Tamar destacado para Dark Mode */
+            --success: #22c55e;      /* Verde sucesso (Leitura) */
+            --border: #2e374d;       /* Cor de borda discreta */
+        }
+
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); }
         iframe { width: 100%; height: 100%; border: none; }
         
         /* ========================================= */
-        /* O VISUAL DO MODAL DA CÂMERA WMS TELA BONITA */
+        /* O VISUAL DO MODAL DO SCANNER DARK WMS */
         /* ========================================= */
-        #leitor-overlay {
+        #scanner-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); z-index: 9999; 
-            flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(10, 15, 30, 0.98); backdrop-filter: blur(8px); z-index: 9999; 
+            flex-direction: column; justify-content: start; align-items: center; padding-top: 40px; box-sizing: border-box;
         }
-        #card-camera {
-            background: #ffffff; padding: 20px; border-radius: 16px; width: 85%; max-width: 360px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center;
+
+        /* 1. Área de Contexto Dinâmico (Orientação do Operador) */
+        #scanner-header { text-align: center; margin-bottom: 30px; width: 85%; max-width: 400px; }
+        
+        /* O que ler (Grande e Visível) */
+        #scanner-title { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* O Valor Esperado (Destaque WMS) */
+        #scanner-expected { 
+            margin: 10px 0 0 0; font-size: 36px; font-weight: 900; color: var(--accent-tamar); 
+            background: rgba(59, 130, 246, 0.1); padding: 5px 15px; border-radius: 8px; display: inline-block;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
         }
+
+        /* 2. O Card do Scanner */
+        #scanner-card {
+            background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 85%; max-width: 400px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid var(--border);
+        }
+
+        /* Container do vídeo com borda Tamar */
         #leitor-container { 
             position: relative; width: 100%; border-radius: 12px; overflow: hidden; 
-            border: 3px solid #00325d; background: #000; margin-bottom: 15px;
+            border: 2px solid var(--accent-tamar); background: #000; margin-bottom: 20px; aspect-ratio: 1/1;
         }
-        #leitor-qr { width: 100%; min-height: 250px; }
+        #leitor-qr { width: 100%; height: 100%; }
         
-        .scan-box {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 75%; height: 65%; border: 2px solid rgba(255, 255, 255, 0.4); 
-            border-radius: 12px; pointer-events: none; display: flex; align-items: center; justify-content: center;
-        }
+        /* 3. Linha Laser de Leitura Discreta e Elegante */
+        /* A biblioteca html5-qrcode já desenha a borda do scanner, vamos adicionar o laser */
         .scan-line {
-            width: 100%; height: 2px; background: rgba(34, 197, 94, 0.9); 
-            box-shadow: 0 0 10px rgba(34, 197, 94, 1); animation: scanline 2s linear infinite;
+            position: absolute; left: 5%; width: 90%; height: 1px; background: var(--accent-tamar); 
+            box-shadow: 0 0 15px 1px var(--accent-tamar); animation: laser-scan 2s linear infinite; opacity: 0.8;
         }
-        @keyframes scanline {
-            0% { transform: translateY(-50px); }
-            50% { transform: translateY(50px); }
-            100% { transform: translateY(-50px); }
+        @keyframes laser-scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
+
+        /* Estilização da borda de sucesso da própria biblioteca */
+        .scan-region-highlight { border: 2px solid var(--accent-tamar) !important; border-radius: 10px; }
+
+        /* 4. Botão Cancelar Moderno WMS (Limpo e Profissional) */
+        #btn-cancel { 
+            width: 100%; padding: 16px; background: transparent; color: var(--text-muted); 
+            border: 1px solid var(--border); border-radius: 12px; font-weight: 700; font-size: 14px; 
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
         }
-        #btn-fechar { 
-            width: 100%; padding: 12px; background: #ef4444; color: white; 
-            border: none; border-radius: 8px; font-weight: 800; font-size: 14px; 
-            cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
-        }
+        #btn-cancel:active { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
     </style>
 </head>
 <body>
     
     <iframe id="iframe-wms" src="https://script.google.com/macros/s/AKfycbw8ymyRRR-SmraPN0xwRPFQsT-E6vJNOBng51t1DG3CHYNiHUlAEOuvIcVQapaU9OfrDg/exec" allow="camera; microphone"></iframe>
 
-    <div id="leitor-overlay">
-        <div id="card-camera">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #00325d; font-size: 18px; font-weight: 800;">
-                Aponte para o QR Code
-            </h3>
+    <div id="scanner-overlay">
+        
+        <div id="scanner-header">
+            <h2 id="scanner-title">Instrução de Leitura</h2> <div id="scanner-expected">---</div> </div>
+        
+        <div id="scanner-card">
             <div id="leitor-container">
                 <div id="leitor-qr"></div>
-                <div class="scan-box"><div class="scan-line"></div></div>
+                <div class="scan-line"></div>
             </div>
-            <button id="btn-fechar" onclick="fecharCameraGitHub()">CANCELAR LEITURA</button>
+            <button id="btn-cancel" onclick="fecharCameraGitHub()">CANCELAR</button>
         </div>
     </div>
 
@@ -86,20 +110,39 @@
         let leitorAoVivo = null;
         let rotaDoGoogle = null; 
 
+        // Escuta mensagens vindas do Apps Script
         window.addEventListener("message", function(event) {
-            if (event.data === "ABRIR_CAMERA") {
+            if (event.data && event.data.acao === "ABRIR_CAMERA") {
                 rotaDoGoogle = event.source; 
+                
+                // EXTRAÇÃO DO CONTEXTO ENVIADO PELO APPS SCRIPT
+                const contexto = event.data.contexto || {};
+                const titulo = contexto.titulo || "Leia o Código";
+                const valorEsperado = contexto.valorEsperado || "";
+
+                // ATUALIZAÇÃO DA INTERFACE ANTES DE ABRIR
+                document.getElementById('scanner-title').innerText = titulo;
+                document.getElementById('scanner-expected').innerText = valorEsperado;
+                
+                // Se não houver valor esperado (ex: leitura genérica), esconde o destaque
+                if(!valorEsperado) {
+                    document.getElementById('scanner-expected').style.display = 'none';
+                } else {
+                    document.getElementById('scanner-expected').style.display = 'inline-block';
+                }
+
                 abrirCameraGitHub();
             }
         });
 
         function abrirCameraGitHub() {
-            document.getElementById('leitor-overlay').style.display = 'flex';
+            document.getElementById('scanner-overlay').style.display = 'flex';
             if (!leitorAoVivo) leitorAoVivo = new Html5Qrcode("leitor-qr");
             
+            // Configuração WMS: Focada em velocidade e área central
             leitorAoVivo.start(
                 { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, 
                 function(codigoLido) {
                     fecharCameraGitHub();
                     if (rotaDoGoogle) {
@@ -108,13 +151,13 @@
                 },
                 function(erro) {}
             ).catch(err => {
-                alert("Erro ao abrir câmera. Verifique as permissões do navegador.");
+                alert("Erro ao abrir câmera. Verifique as permissões de câmera do navegador.");
                 fecharCameraGitHub();
             });
         }
 
         function fecharCameraGitHub() {
-            document.getElementById('leitor-overlay').style.display = 'none';
+            document.getElementById('scanner-overlay').style.display = 'none';
             if (leitorAoVivo && leitorAoVivo.isScanning) {
                 leitorAoVivo.stop().catch(e => console.log(e));
             }
