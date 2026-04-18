@@ -19,73 +19,66 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
-        /* DEFINIÇÃO DE CORES DARK WMS TAMAR CARGO */
         :root {
-            --bg-dark: #0a0f1e;       /* Fundo profundo */
-            --bg-panel: #111827;     /* Fundo do card/painel */
-            --text-main: #f8fafc;    /* Texto principal (Branco) */
-            --text-muted: #94a3b8;   /* Texto secundário/instrução */
-            --accent-tamar: #3b82f6; /* Azul Tamar destacado para Dark Mode */
-            --success: #22c55e;      /* Verde sucesso (Leitura) */
-            --border: #2e374d;       /* Cor de borda discreta */
+            --bg-dark: #0a0f1e; --bg-panel: #111827; --text-main: #f8fafc; --text-muted: #94a3b8; 
+            --accent-tamar: #3b82f6; --success: #22c55e; --error: #ef4444; --border: #2e374d;
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: var(--bg-dark); font-family: 'Segoe UI', Roboto, sans-serif; color: var(--text-main); }
         iframe { width: 100%; height: 100%; border: none; }
         
-        /* ========================================= */
-        /* O VISUAL DO MODAL DO SCANNER DARK WMS */
-        /* ========================================= */
         #scanner-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(10, 15, 30, 0.98); backdrop-filter: blur(8px); z-index: 9999; 
             flex-direction: column; justify-content: start; align-items: center; padding-top: 40px; box-sizing: border-box;
         }
 
-        /* 1. Área de Contexto Dinâmico (Orientação do Operador) */
-        #scanner-header { text-align: center; margin-bottom: 30px; width: 85%; max-width: 400px; }
+        #scanner-header { text-align: center; margin-bottom: 20px; width: 85%; max-width: 400px; }
+        #scanner-title { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; transition: color 0.3s; }
         
-        /* O que ler (Grande e Visível) */
-        #scanner-title { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* O Valor Esperado (Destaque WMS) */
         #scanner-expected { 
             margin: 10px 0 0 0; font-size: 36px; font-weight: 900; color: var(--accent-tamar); 
             background: rgba(59, 130, 246, 0.1); padding: 5px 15px; border-radius: 8px; display: inline-block;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            transition: all 0.3s;
         }
 
-        /* 2. O Card do Scanner */
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 85%; max-width: 400px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid var(--border);
+            border: 1px solid var(--border); transition: all 0.2s ease-in-out;
         }
 
-        /* Container do vídeo com borda Tamar */
+        /* ANIMAÇÕES WMS PROFISSIONAIS */
+        .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
+        .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-12px); }
+            50% { transform: translateX(12px); }
+            75% { transform: translateX(-12px); }
+        }
+        .shake-animation { animation: shake 0.4s ease-in-out; }
+
         #leitor-container { 
             position: relative; width: 100%; border-radius: 12px; overflow: hidden; 
-            border: 2px solid var(--accent-tamar); background: #000; margin-bottom: 20px; aspect-ratio: 1/1;
+            border: 2px solid var(--accent-tamar); background: #000; margin-bottom: 10px; aspect-ratio: 1/1;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
         #leitor-qr { width: 100%; height: 100%; }
         
-        /* 3. Linha Laser de Leitura Discreta e Elegante */
-        /* A biblioteca html5-qrcode já desenha a borda do scanner, vamos adicionar o laser */
         .scan-line {
-            position: absolute; left: 5%; width: 90%; height: 1px; background: var(--accent-tamar); 
-            box-shadow: 0 0 15px 1px var(--accent-tamar); animation: laser-scan 2s linear infinite; opacity: 0.8;
+            position: absolute; left: 5%; width: 90%; height: 2px; background: var(--accent-tamar); 
+            box-shadow: 0 0 15px 2px var(--accent-tamar); animation: laser-scan 2s linear infinite; opacity: 0.8;
         }
         @keyframes laser-scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
 
-        /* Estilização da borda de sucesso da própria biblioteca */
-        .scan-region-highlight { border: 2px solid var(--accent-tamar) !important; border-radius: 10px; }
+        #scanner-feedback { color: var(--error); font-weight: bold; font-size: 14px; text-align: center; height: 20px; opacity: 0; transition: opacity 0.2s; margin-bottom: 10px; }
 
-        /* 4. Botão Cancelar Moderno WMS (Limpo e Profissional) */
         #btn-cancel { 
             width: 100%; padding: 16px; background: transparent; color: var(--text-muted); 
             border: 1px solid var(--border); border-radius: 12px; font-weight: 700; font-size: 14px; 
-            cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase;
         }
-        #btn-cancel:active { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
     </style>
 </head>
 <body>
@@ -93,73 +86,150 @@
     <iframe id="iframe-wms" src="https://script.google.com/macros/s/AKfycbw8ymyRRR-SmraPN0xwRPFQsT-E6vJNOBng51t1DG3CHYNiHUlAEOuvIcVQapaU9OfrDg/exec" allow="camera; microphone"></iframe>
 
     <div id="scanner-overlay">
-        
         <div id="scanner-header">
-            <h2 id="scanner-title">Instrução de Leitura</h2> <div id="scanner-expected">---</div> </div>
+            <h2 id="scanner-title">Instrução</h2>
+            <div id="scanner-expected">---</div>
+        </div>
         
         <div id="scanner-card">
             <div id="leitor-container">
                 <div id="leitor-qr"></div>
-                <div class="scan-line"></div>
+                <div class="scan-line" id="scan-laser"></div>
             </div>
+            <div id="scanner-feedback">Código Inválido</div>
             <button id="btn-cancel" onclick="fecharCameraGitHub()">CANCELAR</button>
         </div>
     </div>
 
+    <audio id="audio-success" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+    <audio id="audio-error" src="https://www.soundjay.com/button/beep-10.wav" preload="auto"></audio>
+
     <script>
         let leitorAoVivo = null;
         let rotaDoGoogle = null; 
+        let isProcessing = false; // Trava para evitar leituras múltiplas no mesmo milissegundo
 
-        // Escuta mensagens vindas do Apps Script
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
                 rotaDoGoogle = event.source; 
-                
-                // EXTRAÇÃO DO CONTEXTO ENVIADO PELO APPS SCRIPT
-                const contexto = event.data.contexto || {};
-                const titulo = contexto.titulo || "Leia o Código";
-                const valorEsperado = contexto.valorEsperado || "";
-
-                // ATUALIZAÇÃO DA INTERFACE ANTES DE ABRIR
-                document.getElementById('scanner-title').innerText = titulo;
-                document.getElementById('scanner-expected').innerText = valorEsperado;
-                
-                // Se não houver valor esperado (ex: leitura genérica), esconde o destaque
-                if(!valorEsperado) {
-                    document.getElementById('scanner-expected').style.display = 'none';
-                } else {
-                    document.getElementById('scanner-expected').style.display = 'inline-block';
-                }
-
+                atualizarTextos(event.data.contexto.titulo, event.data.contexto.valorEsperado);
                 abrirCameraGitHub();
+            } 
+            else if (event.data && event.data.acao === "FEEDBACK_SCAN") {
+                processarFeedbackDoGoogle(event.data);
             }
         });
 
+        function atualizarTextos(titulo, esperado) {
+            document.getElementById('scanner-title').innerText = titulo;
+            document.getElementById('scanner-expected').innerText = esperado;
+            document.getElementById('scanner-expected').style.display = esperado ? 'inline-block' : 'none';
+        }
+
         function abrirCameraGitHub() {
             document.getElementById('scanner-overlay').style.display = 'flex';
-            if (!leitorAoVivo) leitorAoVivo = new Html5Qrcode("leitor-qr");
-            
-            // Configuração WMS: Focada em velocidade e área central
-            leitorAoVivo.start(
-                { facingMode: "environment" }, 
-                { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, 
-                function(codigoLido) {
+            isProcessing = false;
+
+            if (!leitorAoVivo) {
+                leitorAoVivo = new Html5Qrcode("leitor-qr");
+                leitorAoVivo.start(
+                    { facingMode: "environment" }, 
+                    { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, 
+                    function(codigoLido) {
+                        if(isProcessing) return; // Se já está processando um código, ignora
+                        
+                        isProcessing = true;
+                        if(leitorAoVivo.getState() === 2) {
+                            leitorAoVivo.pause(true); // PAUSA A LEITURA, MAS MANTÉM O VÍDEO ROLANDO!
+                        }
+
+                        // Oculta o laser temporariamente
+                        document.getElementById('scan-laser').style.display = 'none';
+
+                        // Manda para o Google validar
+                        if (rotaDoGoogle) {
+                            rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
+                        }
+                    },
+                    function(erro) {}
+                ).catch(err => {
+                    alert("Erro ao abrir câmera. Verifique as permissões de câmera.");
                     fecharCameraGitHub();
-                    if (rotaDoGoogle) {
-                        rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
-                    }
-                },
-                function(erro) {}
-            ).catch(err => {
-                alert("Erro ao abrir câmera. Verifique as permissões de câmera do navegador.");
-                fecharCameraGitHub();
-            });
+                });
+            } else if (leitorAoVivo.getState() === 3) { // Se estava pausado
+                leitorAoVivo.resume();
+                document.getElementById('scan-laser').style.display = 'block';
+            }
+        }
+
+        // =======================================================
+        // O MOTOR DE FEEDBACK VISUAL E TRANSIÇÃO CONTÍNUA
+        // =======================================================
+        function processarFeedbackDoGoogle(dados) {
+            const container = document.getElementById('leitor-container');
+            const card = document.getElementById('scanner-card');
+            const feedbackMsg = document.getElementById('scanner-feedback');
+            const laser = document.getElementById('scan-laser');
+
+            if (dados.status === "SUCESSO_CONTINUAR") {
+                document.getElementById('audio-success').play().catch(e=>{});
+                container.classList.add('glow-success');
+                document.getElementById('scanner-expected').style.color = "var(--success)";
+                
+                // Aguarda 600ms exibindo o brilho verde e então troca de Endereço para SKU
+                setTimeout(() => {
+                    container.classList.remove('glow-success');
+                    document.getElementById('scanner-expected').style.color = "var(--accent-tamar)";
+                    atualizarTextos(dados.contexto.titulo, dados.contexto.valorEsperado);
+                    
+                    // Retoma a leitura contínua!
+                    isProcessing = false;
+                    laser.style.display = 'block';
+                    if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
+                }, 600);
+
+            } else if (dados.status === "SUCESSO_FECHAR") {
+                document.getElementById('audio-success').play().catch(e=>{});
+                container.classList.add('glow-success');
+                
+                // Sucesso final do Produto. Brilha verde e fecha o Scanner para digitar a QTD.
+                setTimeout(() => {
+                    container.classList.remove('glow-success');
+                    fecharCameraGitHub();
+                }, 600);
+
+            } else if (dados.status === "ERRO") {
+                document.getElementById('audio-error').play().catch(e=>{});
+                
+                // Tremer a tela e piscar vermelho!
+                card.classList.add('shake-animation');
+                container.classList.add('glow-error');
+                document.getElementById('scanner-expected').style.color = "var(--error)";
+                
+                feedbackMsg.innerText = dados.mensagem || "Código Incorreto!";
+                feedbackMsg.style.opacity = "1";
+                
+                setTimeout(() => {
+                    card.classList.remove('shake-animation');
+                    container.classList.remove('glow-error');
+                    document.getElementById('scanner-expected').style.color = "var(--accent-tamar)";
+                    feedbackMsg.style.opacity = "0";
+                    
+                    // Retoma a leitura para o operador tentar de novo sem ter que clicar em nada!
+                    isProcessing = false;
+                    laser.style.display = 'block';
+                    if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
+                }, 1000);
+            }
         }
 
         function fecharCameraGitHub() {
             document.getElementById('scanner-overlay').style.display = 'none';
             if (leitorAoVivo && leitorAoVivo.isScanning) {
-                leitorAoVivo.stop().catch(e => console.log(e));
+                leitorAoVivo.stop().then(() => {
+                    leitorAoVivo.clear();
+                    leitorAoVivo = null;
+                }).catch(e => console.log(e));
             }
         }
     </script>
