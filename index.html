@@ -30,24 +30,33 @@
         #scanner-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(10, 15, 30, 0.98); backdrop-filter: blur(8px); z-index: 9999; 
-            flex-direction: column; justify-content: start; align-items: center; padding-top: 40px; box-sizing: border-box;
+            flex-direction: column; justify-content: start; align-items: center; padding-top: 25px; box-sizing: border-box;
         }
 
-        #scanner-header { text-align: center; margin-bottom: 20px; width: 85%; max-width: 400px; }
-        #scanner-title { margin: 0; font-size: 22px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; transition: color 0.3s; }
-        
-        #scanner-expected { 
-            margin: 10px 0 0 0; font-size: 36px; font-weight: 900; color: var(--accent-tamar); 
-            background: rgba(59, 130, 246, 0.1); padding: 5px 15px; border-radius: 8px; display: inline-block;
-            transition: all 0.3s;
+        /* ========================================== */
+        /* O NOVO HEADER PROFISSIONAL - ESTILO CARD WMS */
+        /* ========================================== */
+        #scanner-header { 
+            width: 90%; max-width: 400px; background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
+        .header-row-1 { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        #scan-sku { font-size: 18px; font-weight: 900; color: var(--accent-tamar); letter-spacing: 0.5px; }
+        #scan-desc { font-size: 13px; font-weight: 500; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+        .header-row-2 { display: flex; justify-content: space-between; align-items: center; }
+        #scan-instrucao { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        #scan-endereco { font-size: 24px; font-weight: 900; color: var(--text-main); transition: color 0.3s; }
+
+        /* ========================================== */
+        /* O CARD DA CÂMERA E ANIMAÇÕES INTACTAS      */
+        /* ========================================== */
         #scanner-card {
-            background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 85%; max-width: 400px; 
+            background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
             border: 1px solid var(--border); transition: all 0.2s ease-in-out;
         }
 
-        /* ANIMAÇÕES WMS PROFISSIONAIS */
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
         .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
         
@@ -87,8 +96,14 @@
 
     <div id="scanner-overlay">
         <div id="scanner-header">
-            <h2 id="scanner-title">Instrução</h2>
-            <div id="scanner-expected">---</div>
+            <div class="header-row-1">
+                <span id="scan-sku">SKU</span>
+                <span id="scan-desc">Descrição do Produto</span>
+            </div>
+            <div class="header-row-2">
+                <span id="scan-instrucao">Ação:</span>
+                <span id="scan-endereco">A-01-01</span>
+            </div>
         </div>
         
         <div id="scanner-card">
@@ -107,12 +122,12 @@
     <script>
         let leitorAoVivo = null;
         let rotaDoGoogle = null; 
-        let isProcessing = false; // Trava para evitar leituras múltiplas no mesmo milissegundo
+        let isProcessing = false; 
 
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
                 rotaDoGoogle = event.source; 
-                atualizarTextos(event.data.contexto.titulo, event.data.contexto.valorEsperado);
+                atualizarTextos(event.data.contexto);
                 abrirCameraGitHub();
             } 
             else if (event.data && event.data.acao === "FEEDBACK_SCAN") {
@@ -120,10 +135,16 @@
             }
         });
 
-        function atualizarTextos(titulo, esperado) {
-            document.getElementById('scanner-title').innerText = titulo;
-            document.getElementById('scanner-expected').innerText = esperado;
-            document.getElementById('scanner-expected').style.display = esperado ? 'inline-block' : 'none';
+        // A FUNÇÃO DE ATUALIZAR OS TEXTOS AJUSTADA PARA O NOVO HEADER
+        function atualizarTextos(ctx) {
+            if (!ctx) return;
+            // Linha 1
+            if (ctx.sku) document.getElementById('scan-sku').innerText = ctx.sku;
+            if (ctx.descricao) document.getElementById('scan-desc').innerText = ctx.descricao;
+            
+            // Linha 2
+            if (ctx.titulo) document.getElementById('scan-instrucao').innerText = ctx.titulo;
+            if (ctx.valorEsperado) document.getElementById('scan-endereco').innerText = ctx.valorEsperado;
         }
 
         function abrirCameraGitHub() {
@@ -136,17 +157,15 @@
                     { facingMode: "environment" }, 
                     { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, 
                     function(codigoLido) {
-                        if(isProcessing) return; // Se já está processando um código, ignora
+                        if(isProcessing) return; 
                         
                         isProcessing = true;
                         if(leitorAoVivo.getState() === 2) {
-                            leitorAoVivo.pause(true); // PAUSA A LEITURA, MAS MANTÉM O VÍDEO ROLANDO!
+                            leitorAoVivo.pause(true); 
                         }
 
-                        // Oculta o laser temporariamente
                         document.getElementById('scan-laser').style.display = 'none';
 
-                        // Manda para o Google validar
                         if (rotaDoGoogle) {
                             rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
                         }
@@ -156,15 +175,12 @@
                     alert("Erro ao abrir câmera. Verifique as permissões de câmera.");
                     fecharCameraGitHub();
                 });
-            } else if (leitorAoVivo.getState() === 3) { // Se estava pausado
+            } else if (leitorAoVivo.getState() === 3) { 
                 leitorAoVivo.resume();
                 document.getElementById('scan-laser').style.display = 'block';
             }
         }
 
-        // =======================================================
-        // O MOTOR DE FEEDBACK VISUAL E TRANSIÇÃO CONTÍNUA
-        // =======================================================
         function processarFeedbackDoGoogle(dados) {
             const container = document.getElementById('leitor-container');
             const card = document.getElementById('scanner-card');
@@ -174,15 +190,13 @@
             if (dados.status === "SUCESSO_CONTINUAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
                 container.classList.add('glow-success');
-                document.getElementById('scanner-expected').style.color = "var(--success)";
+                document.getElementById('scan-endereco').style.color = "var(--success)";
                 
-                // Aguarda 600ms exibindo o brilho verde e então troca de Endereço para SKU
                 setTimeout(() => {
                     container.classList.remove('glow-success');
-                    document.getElementById('scanner-expected').style.color = "var(--accent-tamar)";
-                    atualizarTextos(dados.contexto.titulo, dados.contexto.valorEsperado);
+                    document.getElementById('scan-endereco').style.color = "var(--text-main)";
+                    atualizarTextos(dados.contexto);
                     
-                    // Retoma a leitura contínua!
                     isProcessing = false;
                     laser.style.display = 'block';
                     if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
@@ -192,7 +206,6 @@
                 document.getElementById('audio-success').play().catch(e=>{});
                 container.classList.add('glow-success');
                 
-                // Sucesso final do Produto. Brilha verde e fecha o Scanner para digitar a QTD.
                 setTimeout(() => {
                     container.classList.remove('glow-success');
                     fecharCameraGitHub();
@@ -201,10 +214,9 @@
             } else if (dados.status === "ERRO") {
                 document.getElementById('audio-error').play().catch(e=>{});
                 
-                // Tremer a tela e piscar vermelho!
                 card.classList.add('shake-animation');
                 container.classList.add('glow-error');
-                document.getElementById('scanner-expected').style.color = "var(--error)";
+                document.getElementById('scan-endereco').style.color = "var(--error)";
                 
                 feedbackMsg.innerText = dados.mensagem || "Código Incorreto!";
                 feedbackMsg.style.opacity = "1";
@@ -212,10 +224,9 @@
                 setTimeout(() => {
                     card.classList.remove('shake-animation');
                     container.classList.remove('glow-error');
-                    document.getElementById('scanner-expected').style.color = "var(--accent-tamar)";
+                    document.getElementById('scan-endereco').style.color = "var(--text-main)";
                     feedbackMsg.style.opacity = "0";
                     
-                    // Retoma a leitura para o operador tentar de novo sem ter que clicar em nada!
                     isProcessing = false;
                     laser.style.display = 'block';
                     if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
