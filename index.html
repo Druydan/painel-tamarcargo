@@ -225,10 +225,16 @@
             const flash = document.getElementById('flash-overlay');
             flash.classList.remove('flash-active');
             
-            // Esse comando "magico" força o navegador a reiniciar a animação
+            // Força o navegador a reiniciar a animação
             void flash.offsetWidth; 
             
             flash.classList.add('flash-active');
+
+            // MÁGICA DA CORREÇÃO: Remove a classe quando a animação acabar (600ms)
+            // Assim, quando a câmera abrir no próximo item, o flash não repete sozinho!
+            setTimeout(() => {
+                flash.classList.remove('flash-active');
+            }, 600);
         }
 
         function processarFeedbackDoGoogle(dados) {
