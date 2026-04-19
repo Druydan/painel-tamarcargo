@@ -47,13 +47,15 @@
 
         .header-body { display: flex; justify-content: space-between; align-items: stretch; }
 
-        /* MUDANÇA AQUI: Centraliza tudo e se adapta caso falte a descrição */
+        /* AQUI: Mantida a centralização perfeita */
         .header-left { 
             flex: 1; padding-right: 15px; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
         
         #scan-sku { font-size: 16px; font-weight: 900; color: var(--text-main); letter-spacing: 0.5px; transition: color 0.3s; }
+        
+        /* AQUI: Descrição sempre visível */
         #scan-desc { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         .header-right { display: flex; gap: 10px; align-items: center; border-left: 1px solid var(--border); padding-left: 15px; justify-content: center;}
@@ -106,7 +108,7 @@
             <div class="header-body">
                 <div class="header-left">
                     <div id="scan-sku">---</div>
-                    <div id="scan-desc" style="display: none;"></div>
+                    <div id="scan-desc">Carregando...</div>
                 </div>
                 <div class="header-right">
                     <div class="endereco-box">
@@ -152,14 +154,9 @@
             
             if (ctx.sku) document.getElementById('scan-sku').innerText = ctx.sku;
             
-            // MÁGICA: Se tem descrição, mostra. Se não tem, some e o SKU centraliza!
-            const descEl = document.getElementById('scan-desc');
-            if (ctx.descricao && ctx.descricao.trim() !== "") {
-                descEl.innerText = ctx.descricao;
-                descEl.style.display = '-webkit-box';
-            } else {
-                descEl.style.display = 'none';
-                descEl.innerText = "";
+            // AQUI: Apenas injeta a descrição sem tentar esconder a div
+            if (ctx.descricao !== undefined) {
+                document.getElementById('scan-desc').innerText = ctx.descricao;
             }
 
             if (ctx.endereco) document.getElementById('scan-endereco').innerText = ctx.endereco;
@@ -259,7 +256,6 @@
                 instrucaoBox.style.borderColor = "var(--error)";
                 document.getElementById('scan-instrucao').style.color = "var(--error)";
                 
-                // MÁGICA: Feedback curto e direto baseado no passo atual!
                 let msgDireta = passoAtivoDaCamera === "ENDERECO" ? "ENDEREÇO INCORRETO!" : "CÓDIGO INCORRETO!";
                 feedbackMsg.innerText = msgDireta;
                 feedbackMsg.style.opacity = "1";
