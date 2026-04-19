@@ -37,7 +37,11 @@
         #flash-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(34, 197, 94, 0.35); /* Verde mais nítido */
-            z-index: 10000; pointer-events: none; opacity: 0;
+            
+            /* AQUI ESTÁ A CORREÇÃO: UM Z-INDEX ABSURDAMENTE ALTO */
+            z-index: 20000; 
+            
+            pointer-events: none; opacity: 0;
         }
         @keyframes animacaoFlash {
             0% { opacity: 0; }
@@ -51,7 +55,7 @@
         #scanner-header { 
             width: 90%; max-width: 400px; background: var(--bg-panel); border: 1px solid var(--border);
             border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            box-sizing: border-box; z-index: 10001; /* Fica acima do flash */
+            box-sizing: border-box; z-index: 10001; /* Fica acima do flash antigo */
         }
 
         #scan-instrucao-container {
@@ -82,7 +86,7 @@
 
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
-            border: 1px solid var(--border); transition: all 0.2s ease-in-out; z-index: 10001;
+            border: 1px solid var(--border); transition: all 0.2s ease-in-out; z-index: 10001; /* Fica acima do flash antigo */
         }
 
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
