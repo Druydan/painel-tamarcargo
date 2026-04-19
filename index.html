@@ -33,39 +33,30 @@
             flex-direction: column; justify-content: start; align-items: center; padding-top: 25px; box-sizing: border-box;
         }
 
-        /* ========================================== */
-        /* O NOVO HEADER PROFISSIONAL - CLONE DA LISTA */
-        /* ========================================== */
         #scanner-header { 
             width: 90%; max-width: 400px; background: var(--bg-panel); border: 1px solid var(--border);
             border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             box-sizing: border-box;
         }
 
-        /* O pequeno aviso no topo ("LEIA O ENDEREÇO", etc) */
         #scan-instrucao-container {
             text-align: center; background: rgba(59, 130, 246, 0.1); border: 1px dashed var(--accent-tamar);
             padding: 6px; border-radius: 6px; margin-bottom: 12px; transition: all 0.3s;
         }
         #scan-instrucao { font-size: 12px; font-weight: 900; color: var(--accent-tamar); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Container que deixa Lado a Lado */
         .header-body { display: flex; justify-content: space-between; align-items: center; }
 
-        /* Esquerda: Código (Branco) e Descrição */
         .header-left { flex: 1; padding-right: 15px; }
-        #scan-sku { font-size: 16px; font-weight: 900; color: var(--text-main); letter-spacing: 0.5px; }
+        /* O SKU agora tem transição de cor para piscar junto com o efeito */
+        #scan-sku { font-size: 16px; font-weight: 900; color: var(--text-main); letter-spacing: 0.5px; transition: color 0.3s; }
         #scan-desc { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* Direita: A barra marota e o Endereço */
         .header-right { display: flex; gap: 10px; align-items: center; border-left: 1px solid var(--border); padding-left: 15px; }
         .endereco-box { text-align: center; min-width: 70px; }
         .endereco-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: color 0.3s; }
 
-        /* ========================================== */
-        /* O CARD DA CÂMERA E ANIMAÇÕES INTACTAS      */
-        /* ========================================== */
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
             border: 1px solid var(--border); transition: all 0.2s ease-in-out;
@@ -74,12 +65,7 @@
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
         .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
         
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-12px); }
-            50% { transform: translateX(12px); }
-            75% { transform: translateX(-12px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-12px); } 50% { transform: translateX(12px); } 75% { transform: translateX(-12px); } }
         .shake-animation { animation: shake 0.4s ease-in-out; }
 
         #leitor-container { 
@@ -109,7 +95,6 @@
     <iframe id="iframe-wms" src="https://script.google.com/macros/s/AKfycbw8ymyRRR-SmraPN0xwRPFQsT-E6vJNOBng51t1DG3CHYNiHUlAEOuvIcVQapaU9OfrDg/exec" allow="camera; microphone"></iframe>
 
     <div id="scanner-overlay">
-        
         <div id="scanner-header">
             <div id="scan-instrucao-container">
                 <span id="scan-instrucao">AÇÃO</span>
@@ -145,6 +130,7 @@
         let leitorAoVivo = null;
         let rotaDoGoogle = null; 
         let isProcessing = false; 
+        let passoAtivoDaCamera = "ENDERECO"; // Guarda o estado de quem vai piscar
 
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
@@ -161,8 +147,9 @@
             if (!ctx) return;
             if (ctx.sku) document.getElementById('scan-sku').innerText = ctx.sku;
             if (ctx.descricao) document.getElementById('scan-desc').innerText = ctx.descricao;
+            if (ctx.endereco) document.getElementById('scan-endereco').innerText = ctx.endereco;
             if (ctx.titulo) document.getElementById('scan-instrucao').innerText = ctx.titulo;
-            if (ctx.valorEsperado) document.getElementById('scan-endereco').innerText = ctx.valorEsperado;
+            if (ctx.passo) passoAtivoDaCamera = ctx.passo; // O Google diz se o alvo atual é SKU ou ENDERECO
         }
 
         function abrirCameraGitHub() {
@@ -178,9 +165,7 @@
                         if(isProcessing) return; 
                         
                         isProcessing = true;
-                        if(leitorAoVivo.getState() === 2) {
-                            leitorAoVivo.pause(true); 
-                        }
+                        if(leitorAoVivo.getState() === 2) leitorAoVivo.pause(true); 
 
                         document.getElementById('scan-laser').style.display = 'none';
 
@@ -190,7 +175,7 @@
                     },
                     function(erro) {}
                 ).catch(err => {
-                    alert("Erro ao abrir câmera. Verifique as permissões de câmera.");
+                    alert("Erro ao abrir câmera. Verifique as permissões.");
                     fecharCameraGitHub();
                 });
             } else if (leitorAoVivo.getState() === 3) { 
@@ -204,30 +189,30 @@
             const card = document.getElementById('scanner-card');
             const feedbackMsg = document.getElementById('scanner-feedback');
             const laser = document.getElementById('scan-laser');
-            
-            // Puxamos a caixinha de instrução para mudar a cor dela junto com o endereço
             const instrucaoBox = document.getElementById('scan-instrucao-container');
+            
+            // MÁGICA: Seleciona QUEM vai brilhar baseado no passo atual
+            const elementoAlvo = document.getElementById(passoAtivoDaCamera === "SKU" ? 'scan-sku' : 'scan-endereco');
 
             if (dados.status === "SUCESSO_CONTINUAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
                 container.classList.add('glow-success');
-                document.getElementById('scan-endereco').style.color = "var(--success)";
                 
-                // Mágica extra: A caixinha da instrução pisca verde também!
+                // Brilha apenas o texto correto
+                elementoAlvo.style.color = "var(--success)";
                 instrucaoBox.style.background = "rgba(34, 197, 94, 0.1)";
                 instrucaoBox.style.borderColor = "var(--success)";
                 document.getElementById('scan-instrucao').style.color = "var(--success)";
                 
                 setTimeout(() => {
                     container.classList.remove('glow-success');
-                    document.getElementById('scan-endereco').style.color = "var(--text-main)";
+                    elementoAlvo.style.color = "var(--text-main)"; // Reseta o texto pro branco
                     
-                    // Reseta a cor da instrução
                     instrucaoBox.style.background = "rgba(59, 130, 246, 0.1)";
                     instrucaoBox.style.borderColor = "var(--accent-tamar)";
                     document.getElementById('scan-instrucao').style.color = "var(--accent-tamar)";
                     
-                    atualizarTextos(dados.contexto);
+                    atualizarTextos(dados.contexto); // Só depois de resetar ele atualiza para o próximo passo
                     
                     isProcessing = false;
                     laser.style.display = 'block';
@@ -237,9 +222,11 @@
             } else if (dados.status === "SUCESSO_FECHAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
                 container.classList.add('glow-success');
+                elementoAlvo.style.color = "var(--success)";
                 
                 setTimeout(() => {
                     container.classList.remove('glow-success');
+                    elementoAlvo.style.color = "var(--text-main)";
                     fecharCameraGitHub();
                 }, 600);
 
@@ -248,9 +235,8 @@
                 
                 card.classList.add('shake-animation');
                 container.classList.add('glow-error');
-                document.getElementById('scan-endereco').style.color = "var(--error)";
+                elementoAlvo.style.color = "var(--error)";
                 
-                // Mágica extra: A caixinha da instrução pisca vermelho!
                 instrucaoBox.style.background = "rgba(239, 68, 68, 0.1)";
                 instrucaoBox.style.borderColor = "var(--error)";
                 document.getElementById('scan-instrucao').style.color = "var(--error)";
@@ -261,9 +247,8 @@
                 setTimeout(() => {
                     card.classList.remove('shake-animation');
                     container.classList.remove('glow-error');
-                    document.getElementById('scan-endereco').style.color = "var(--text-main)";
+                    elementoAlvo.style.color = "var(--text-main)";
                     
-                    // Reseta a cor da instrução
                     instrucaoBox.style.background = "rgba(59, 130, 246, 0.1)";
                     instrucaoBox.style.borderColor = "var(--accent-tamar)";
                     document.getElementById('scan-instrucao').style.color = "var(--accent-tamar)";
