@@ -48,7 +48,6 @@
         .header-body { display: flex; justify-content: space-between; align-items: center; }
 
         .header-left { flex: 1; padding-right: 15px; }
-        /* O SKU agora tem transição de cor para piscar junto com o efeito */
         #scan-sku { font-size: 16px; font-weight: 900; color: var(--text-main); letter-spacing: 0.5px; transition: color 0.3s; }
         #scan-desc { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -101,13 +100,13 @@
             </div>
             <div class="header-body">
                 <div class="header-left">
-                    <div id="scan-sku">SKU</div>
-                    <div id="scan-desc">Descrição do Produto</div>
+                    <div id="scan-sku">---</div>
+                    <div id="scan-desc">Carregando...</div>
                 </div>
                 <div class="header-right">
                     <div class="endereco-box">
                         <div class="endereco-label">Endereço</div>
-                        <div id="scan-endereco">A-01-01</div>
+                        <div id="scan-endereco">---</div>
                     </div>
                 </div>
             </div>
@@ -130,7 +129,7 @@
         let leitorAoVivo = null;
         let rotaDoGoogle = null; 
         let isProcessing = false; 
-        let passoAtivoDaCamera = "ENDERECO"; // Guarda o estado de quem vai piscar
+        let passoAtivoDaCamera = "ENDERECO"; 
 
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
@@ -145,11 +144,19 @@
 
         function atualizarTextos(ctx) {
             if (!ctx) return;
+            
+            // Lógica blindada: só atualiza se realmente veio dado do Google Script
             if (ctx.sku) document.getElementById('scan-sku').innerText = ctx.sku;
             if (ctx.descricao) document.getElementById('scan-desc').innerText = ctx.descricao;
             if (ctx.endereco) document.getElementById('scan-endereco').innerText = ctx.endereco;
             if (ctx.titulo) document.getElementById('scan-instrucao').innerText = ctx.titulo;
-            if (ctx.passo) passoAtivoDaCamera = ctx.passo; // O Google diz se o alvo atual é SKU ou ENDERECO
+            
+            // Inteligência para saber quem pisca
+            if (ctx.passo) {
+                passoAtivoDaCamera = ctx.passo;
+            } else if (ctx.titulo) {
+                passoAtivoDaCamera = ctx.titulo.includes("ENDEREÇO") ? "ENDERECO" : "SKU";
+            }
         }
 
         function abrirCameraGitHub() {
@@ -191,14 +198,12 @@
             const laser = document.getElementById('scan-laser');
             const instrucaoBox = document.getElementById('scan-instrucao-container');
             
-            // MÁGICA: Seleciona QUEM vai brilhar baseado no passo atual
             const elementoAlvo = document.getElementById(passoAtivoDaCamera === "SKU" ? 'scan-sku' : 'scan-endereco');
 
             if (dados.status === "SUCESSO_CONTINUAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
                 container.classList.add('glow-success');
                 
-                // Brilha apenas o texto correto
                 elementoAlvo.style.color = "var(--success)";
                 instrucaoBox.style.background = "rgba(34, 197, 94, 0.1)";
                 instrucaoBox.style.borderColor = "var(--success)";
@@ -206,13 +211,13 @@
                 
                 setTimeout(() => {
                     container.classList.remove('glow-success');
-                    elementoAlvo.style.color = "var(--text-main)"; // Reseta o texto pro branco
+                    elementoAlvo.style.color = "var(--text-main)"; 
                     
                     instrucaoBox.style.background = "rgba(59, 130, 246, 0.1)";
                     instrucaoBox.style.borderColor = "var(--accent-tamar)";
                     document.getElementById('scan-instrucao').style.color = "var(--accent-tamar)";
                     
-                    atualizarTextos(dados.contexto); // Só depois de resetar ele atualiza para o próximo passo
+                    atualizarTextos(dados.contexto); 
                     
                     isProcessing = false;
                     laser.style.display = 'block';
