@@ -33,16 +33,19 @@
             flex-direction: column; justify-content: start; align-items: center; padding-top: 25px; box-sizing: border-box;
         }
 
-        /* O FLASH VERDE FLUÍDO DE SUCESSO NA TELA INTEIRA */
+        /* O FLASH VERDE BLINDADO COM KEYFRAMES */
         #flash-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(34, 197, 94, 0.25); /* Verde translúcido */
-            z-index: 10000; pointer-events: none; /* Não bloqueia toques */
-            opacity: 0; transition: opacity 0.5s ease-out; /* Apaga devagar (fluido) */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(34, 197, 94, 0.35); /* Verde mais nítido */
+            z-index: 10000; pointer-events: none; opacity: 0;
+        }
+        @keyframes animacaoFlash {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            100% { opacity: 0; }
         }
         .flash-active {
-            opacity: 1 !important;
-            transition: opacity 0.05s ease-in !important; /* Acende na velocidade da luz */
+            animation: animacaoFlash 0.6s ease-out forwards;
         }
 
         #scanner-header { 
@@ -111,11 +114,12 @@
     </style>
 </head>
 <body>
-    <div id="flash-overlay"></div>
 
     <iframe id="iframe-wms" src="https://script.google.com/macros/s/AKfycbw8ymyRRR-SmraPN0xwRPFQsT-E6vJNOBng51t1DG3CHYNiHUlAEOuvIcVQapaU9OfrDg/exec" allow="camera; microphone"></iframe>
 
     <div id="scanner-overlay">
+        <div id="flash-overlay"></div>
+
         <div id="scanner-header">
             <div id="scan-instrucao-container">
                 <span id="scan-instrucao">AÇÃO</span>
@@ -210,11 +214,17 @@
             }
         }
 
+        // ==========================================
+        // FUNÇÃO BLINDADA PARA FORÇAR O NAVEGADOR A PISCAR O VERDE
+        // ==========================================
         function acionarFlashVerde() {
             const flash = document.getElementById('flash-overlay');
+            flash.classList.remove('flash-active');
+            
+            // Esse comando "magico" força o navegador a reiniciar a animação
+            void flash.offsetWidth; 
+            
             flash.classList.add('flash-active');
-            // Remove a classe logo em seguida, a transição CSS faz ele apagar suavemente
-            setTimeout(() => { flash.classList.remove('flash-active'); }, 50);
         }
 
         function processarFeedbackDoGoogle(dados) {
@@ -228,8 +238,6 @@
 
             if (dados.status === "SUCESSO_CONTINUAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
-                
-                // MÁGICA VISUAL: O Flash verde suave na tela toda!
                 acionarFlashVerde();
                 
                 container.classList.add('glow-success');
@@ -253,8 +261,6 @@
 
             } else if (dados.status === "SUCESSO_FECHAR") {
                 document.getElementById('audio-success').play().catch(e=>{});
-                
-                // MÁGICA VISUAL AQUI TAMBÉM!
                 acionarFlashVerde();
                 
                 container.classList.add('glow-success');
@@ -269,7 +275,7 @@
             } else if (dados.status === "ERRO") {
                 document.getElementById('audio-error').play().catch(e=>{});
                 
-                // MÁGICA SENSORIAL: Vibração do celular (Padrão: Vibra 200ms, Pausa 100ms, Vibra 200ms)
+                // Manteve-se o código de vibração (Vai funcionar se o operador usar Android!)
                 if (navigator.vibrate) {
                     navigator.vibrate([200, 100, 200]);
                 }
