@@ -329,6 +329,150 @@
                 }).catch(e => console.log(e));
             }
         }
+
+        // =================================================================
+        // MOTOR DO SCANNER MOBILE (INTEGRAÇÃO COM O GITHUB)
+        // =================================================================
+        
+        let movMobileLista = [];
+        let movMobileIndex = 0;
+        let movMobilePassoAtivo = "SKU"; // Controla se estamos lendo SKU ou ENDEREÇO
+        
+        // 1. INICIA A TELA PRETA DO CELULAR E CARREGA O 1º ITEM
+        function abrirFluxoContinuoMovimentacao(itens, index) {
+            movMobileLista = itens;
+            movMobileIndex = index;
+            movMobilePassoAtivo = "SKU";
+        
+            let item = movMobileLista[movMobileIndex];
+        
+            // Atualiza os textos do modal
+            document.getElementById('mov-mobile-contador').innerText = `ITEM ${index + 1} DE ${itens.length}`;
+            document.getElementById('foco-mov-sku').innerText = item.sku;
+            document.getElementById('foco-mov-desc').innerText = item.descricao;
+            document.getElementById('foco-mov-qtd-total').innerText = item.qtd;
+        
+            // Limpa os campos
+            document.getElementById('input-mov-sku').value = "";
+            document.getElementById('input-mov-end').value = "";
+            document.getElementById('input-mov-qtd').value = item.qtd; // Sugere quantidade total
+        
+            // Esconde tudo, mostra só o passo 1 (SKU)
+            document.getElementById('container-mov-sku').style.display = 'block';
+            document.getElementById('container-mov-end').style.display = 'none';
+            document.getElementById('container-mov-qtd').style.display = 'none';
+        
+            // Abre o modal na tela
+            document.getElementById('modal-execucao-movimentacao').style.display = 'flex';
+        }
+        
+        // 2. MANDA O COMANDO PARA O GITHUB ABRIR A CÂMERA
+        function iniciarScannerMovimentacao() {
+            let item = movMobileLista[movMobileIndex];
+            let tituloContexto = movMobilePassoAtivo === "SKU" ? "1. BIPE O PRODUTO" : "2. BIPE O ENDEREÇO";
+            
+            window.parent.postMessage({
+                acao: "ABRIR_CAMERA",
+                contexto: {
+                    sku: item.sku,
+                    descricao: item.descricao,
+                    endereco: movMobilePassoAtivo === "ENDERECO" ? "LENDO DESTINO..." : "---",
+                    titulo: tituloContexto,
+                    passo: movMobilePassoAtivo
+                }
+            }, "*");
+        }
+        
+        // 3. ESCUTA A RESPOSTA (O BIPE) QUE VEM DO GITHUB
+        window.addEventListener("message", function(event) {
+            if (event.data && event.data.acao === "QR_LIDO") {
+                let codigoLido = event.data.codigo.trim();
+                
+                if (movMobilePassoAtivo === "SKU") {
+                    document.getElementById('input-mov-sku').value = codigoLido;
+                    validarSKUMovManual(true); // O 'true' avisa que veio da câmera
+                } else if (movMobilePassoAtivo === "ENDERECO") {
+                    document.getElementById('input-mov-end').value = codigoLido;
+                    validarEnderecoMovManual(true);
+                }
+            }
+        });
+        
+        // 4. VALIDA O PRODUTO (SKU)
+        function validarSKUMovManual(veioDaCamera = false) {
+            let lido = document.getElementById('input-mov-sku').value.toUpperCase().trim();
+            let item = movMobileLista[movMobileIndex];
+            
+            if (lido === item.sku.toUpperCase()) {
+                // Acertou! Manda fechar a câmera com brilho verde
+                if (veioDaCamera) window.parent.postMessage({ status: "SUCESSO_FECHAR" }, "*");
+                
+                // Pula para o Passo 2 (Endereço)
+                document.getElementById('container-mov-sku').style.display = 'none';
+                document.getElementById('container-mov-end').style.display = 'block';
+                movMobilePassoAtivo = "ENDERECO";
+                setTimeout(() => document.getElementById('input-mov-end').focus(), 300);
+            } else {
+                // Errou! Manda tremer a câmera e brilhar vermelho
+                if (veioDaCamera) window.parent.postMessage({ status: "ERRO" }, "*");
+                else {
+                    let erroDiv = document.getElementById('erro-mov-sku');
+                    erroDiv.style.opacity = 1;
+                    setTimeout(() => erroDiv.style.opacity = 0, 2000);
+                }
+            }
+        }
+        
+        // 5. VALIDA O ENDEREÇO
+        function validarEnderecoMovManual(veioDaCamera = false) {
+            let endLido = document.getElementById('input-mov-end').value.toUpperCase().trim();
+            
+            // Aqui você pode colocar a regra de validação do formato do endereço se quiser
+            if (endLido !== "") { 
+                // Acertou!
+                if (veioDaCamera) window.parent.postMessage({ status: "SUCESSO_FECHAR" }, "*");
+                
+                // Pula para o Passo 3 (Quantidade)
+                document.getElementById('container-mov-end').style.display = 'none';
+                document.getElementById('container-mov-qtd').style.display = 'block';
+                movMobilePassoAtivo = "QTD";
+            } else {
+                if (veioDaCamera) window.parent.postMessage({ status: "ERRO" }, "*");
+            }
+        }
+        
+        // 6. CONFIRMA QUANTIDADE E CHAMA O APPS SCRIPT PARA GRAVAR
+        function confirmarQuantidadeMov() {
+            let qtd = parseInt(document.getElementById('input-mov-qtd').value);
+            let item = movMobileLista[movMobileIndex];
+            let enderecoDestino = document.getElementById('input-mov-end').value.toUpperCase();
+        
+            if (qtd > 0 && qtd <= item.qtd) {
+                showToast("Salvando movimentação...", "info");
+                
+                // --- AQUI CHAMA SUA FUNÇÃO DO GOOGLE SCRIPT PARA SALVAR NO BANCO ---
+                // Exemplo:
+                // google.script.run.withSuccessHandler(res => {
+                //     showToast("Salvo com sucesso!", "success");
+                //     // Pula para o próximo item da lista
+                //     if (movMobileIndex + 1 < movMobileLista.length) {
+                //         abrirFluxoContinuoMovimentacao(movMobileLista, movMobileIndex + 1);
+                //     } else {
+                //         pausarMovimentacaoMobile();
+                //         carregarItensParaEnderecar(); // Atualiza a tela de trás
+                //     }
+                // }).processarEnderecamento(item.idEntrada, enderecoDestino, qtd);
+                
+            } else {
+                let erroDiv = document.getElementById('erro-mov-qtd');
+                erroDiv.style.opacity = 1;
+                setTimeout(() => erroDiv.style.opacity = 0, 2000);
+            }
+        }
+        
+        function pausarMovimentacaoMobile() {
+            document.getElementById('modal-execucao-movimentacao').style.display = 'none';
+        }
     </script>
 </body>
 </html>
