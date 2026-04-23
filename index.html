@@ -80,6 +80,13 @@
         .endereco-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: all 0.3s ease; }
 
+        /* AQUI É A MÁGICA DA FONTE PEQUENA! */
+        .endereco-aguardando {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: var(--text-muted) !important;
+        }
+
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
             border: 1px solid var(--border); transition: all 0.2s ease-in-out; z-index: 10001; 
@@ -178,19 +185,15 @@
             if (ctx.sku !== undefined) document.getElementById('scan-sku').innerText = ctx.sku;
             if (ctx.descricao !== undefined) document.getElementById('scan-desc').innerText = ctx.descricao;
             
-            // Lógica para diminuir a fonte se for texto de "Aguardando"
             if (ctx.endereco !== undefined) {
                 let elEnd = document.getElementById('scan-endereco');
                 elEnd.innerText = ctx.endereco;
                 
-                if (ctx.endereco.includes("Aguardando")) {
-                    elEnd.style.fontSize = "11px";
-                    elEnd.style.fontWeight = "600";
-                    elEnd.style.color = "var(--text-muted)";
+                // Agora é blindado! Se a palavra "aguardando" ou "---" estiver lá, ele vira texto pequeno.
+                if (ctx.endereco.toLowerCase().includes("aguardando") || ctx.endereco.includes("---")) {
+                    elEnd.classList.add('endereco-aguardando');
                 } else {
-                    elEnd.style.fontSize = "18px";
-                    elEnd.style.fontWeight = "900";
-                    elEnd.style.color = "var(--text-main)";
+                    elEnd.classList.remove('endereco-aguardando');
                 }
             }
 
@@ -292,7 +295,6 @@
                 }, 600);
 
             } else if (dados.status === "IGNORAR") {
-                // MÁGICA: Bipou duplicado sem querer? Ele ignora sem dar erro e destrava a câmera!
                 setTimeout(() => {
                     isProcessing = false;
                     laser.style.display = 'block';
