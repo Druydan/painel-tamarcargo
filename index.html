@@ -36,14 +36,9 @@
         #flash-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(34, 197, 94, 0.35); 
-            z-index: 20000; 
-            pointer-events: none; opacity: 0;
+            z-index: 20000; pointer-events: none; opacity: 0;
         }
-        @keyframes animacaoFlash {
-            0% { opacity: 0; }
-            15% { opacity: 1; }
-            100% { opacity: 0; }
-        }
+        @keyframes animacaoFlash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
         .flash-active { animation: animacaoFlash 0.6s ease-out forwards; }
 
         #scanner-header { 
@@ -58,9 +53,6 @@
         }
         #scan-instrucao { font-size: 12px; font-weight: 900; color: var(--accent-tamar); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* ======================================================= */
-        /* ANIMAÇÕES DO DESLIZE MÁGICO (Intocável para o Picking)  */
-        /* ======================================================= */
         .header-body { display: flex; justify-content: space-between; align-items: stretch; width: 100%; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);}
         
         .header-left { 
@@ -73,14 +65,12 @@
             min-width: 80px; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateX(0);
         }
 
-        /* O Modo Cego recolhe a direita e foca na esquerda */
         .modo-cego .header-right { opacity: 0 !important; width: 0 !important; min-width: 0 !important; padding: 0 !important; border: none !important; transform: translateX(30px) !important; pointer-events: none; }
         .modo-cego .header-left { padding-right: 0 !important; }
         .modo-cego #scan-sku { font-size: 20px !important; color: var(--text-muted); }
 
         #scan-sku { font-size: 16px; font-weight: 900; color: var(--text-main); letter-spacing: 0.5px; transition: all 0.4s ease; }
-        /* ======================================================= */
-
+        
         #scan-desc { 
             font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px; line-height: 1.3; 
             display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
@@ -88,7 +78,7 @@
 
         .endereco-box { text-align: center; width: 100%; }
         .endereco-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: color 0.3s; }
+        #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: all 0.3s ease; }
 
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
@@ -97,7 +87,6 @@
 
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
         .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
-        
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-12px); } 50% { transform: translateX(12px); } 75% { transform: translateX(-12px); } }
         .shake-animation { animation: shake 0.4s ease-in-out; }
 
@@ -107,7 +96,6 @@
             transition: border-color 0.3s, box-shadow 0.3s;
         }
         #leitor-qr { width: 100%; height: 100%; }
-        
         .scan-line {
             position: absolute; left: 5%; width: 90%; height: 2px; background: var(--accent-tamar); 
             box-shadow: 0 0 15px 2px var(--accent-tamar); animation: laser-scan 2s linear infinite; opacity: 0.8;
@@ -115,7 +103,6 @@
         @keyframes laser-scan { 0% { top: 5%; } 50% { top: 95%; } 100% { top: 5%; } }
 
         #scanner-feedback { color: var(--error); font-weight: bold; font-size: 14px; text-align: center; height: 20px; opacity: 0; transition: opacity 0.2s; margin-bottom: 10px; text-transform: uppercase; }
-
         #btn-cancel { 
             width: 100%; padding: 16px; background: transparent; color: var(--text-muted); 
             border: 1px solid var(--border); border-radius: 12px; font-weight: 700; font-size: 14px; 
@@ -181,7 +168,6 @@
         function atualizarTextos(ctx) {
             if (!ctx) return;
             
-            // O GATILHO DA ANIMAÇÃO MÁGICA
             const headerDin = document.getElementById('header-animado');
             if (ctx.esconderEndereco || ctx.estadoCego) {
                 headerDin.classList.add('modo-cego');
@@ -191,7 +177,23 @@
 
             if (ctx.sku !== undefined) document.getElementById('scan-sku').innerText = ctx.sku;
             if (ctx.descricao !== undefined) document.getElementById('scan-desc').innerText = ctx.descricao;
-            if (ctx.endereco !== undefined) document.getElementById('scan-endereco').innerText = ctx.endereco;
+            
+            // Lógica para diminuir a fonte se for texto de "Aguardando"
+            if (ctx.endereco !== undefined) {
+                let elEnd = document.getElementById('scan-endereco');
+                elEnd.innerText = ctx.endereco;
+                
+                if (ctx.endereco.includes("Aguardando")) {
+                    elEnd.style.fontSize = "11px";
+                    elEnd.style.fontWeight = "600";
+                    elEnd.style.color = "var(--text-muted)";
+                } else {
+                    elEnd.style.fontSize = "18px";
+                    elEnd.style.fontWeight = "900";
+                    elEnd.style.color = "var(--text-main)";
+                }
+            }
+
             if (ctx.titulo !== undefined) document.getElementById('scan-instrucao').innerText = ctx.titulo;
             
             if (ctx.passo) {
@@ -269,7 +271,6 @@
                     
                     atualizarTextos(dados.contexto); 
                     
-                    // CORREÇÃO DO DUPLO-BIP: Adicionado 400ms extra para tirar o celular do alvo
                     setTimeout(() => {
                         isProcessing = false;
                         laser.style.display = 'block';
@@ -290,9 +291,16 @@
                     fecharCameraGitHub();
                 }, 600);
 
+            } else if (dados.status === "IGNORAR") {
+                // MÁGICA: Bipou duplicado sem querer? Ele ignora sem dar erro e destrava a câmera!
+                setTimeout(() => {
+                    isProcessing = false;
+                    laser.style.display = 'block';
+                    if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
+                }, 100);
+
             } else if (dados.status === "ERRO") {
                 document.getElementById('audio-error').play().catch(e=>{});
-                
                 if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                 
                 card.classList.add('shake-animation');
@@ -303,7 +311,7 @@
                 instrucaoBox.style.borderColor = "var(--error)";
                 document.getElementById('scan-instrucao').style.color = "var(--error)";
                 
-                let msgDireta = passoAtivoDaCamera === "ENDERECO" ? "ENDEREÇO INCORRETO!" : "CÓDIGO INCORRETO!";
+                let msgDireta = passoAtivoDaCamera === "ENDERECO" ? "ENDEREÇO INCORRETO!" : "CÓDIGO NÃO ENCONTRADO!";
                 feedbackMsg.innerText = msgDireta;
                 feedbackMsg.style.opacity = "1";
                 
@@ -317,8 +325,6 @@
                     document.getElementById('scan-instrucao').style.color = "var(--accent-tamar)";
                     
                     feedbackMsg.style.opacity = "0";
-                    
-                    // Aqui mantemos rápido para ele tentar ler de novo rápido se errou
                     isProcessing = false;
                     laser.style.display = 'block';
                     if(leitorAoVivo.getState() === 3) leitorAoVivo.resume();
