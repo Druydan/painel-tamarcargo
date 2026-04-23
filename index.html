@@ -80,11 +80,7 @@
         .endereco-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: all 0.3s ease; }
 
-        .endereco-aguardando {
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            color: var(--text-muted) !important;
-        }
+        .endereco-aguardando { font-size: 11px !important; font-weight: 600 !important; color: var(--text-muted) !important; }
 
         #scanner-card {
             background: var(--bg-panel); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px; 
@@ -93,6 +89,15 @@
 
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
         .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
+        
+        /* ======================================================= */
+        /* MÁGICA: SEQUESTRANDO A COR DAS 4 BORDAS DA CÂMERA       */
+        /* ======================================================= */
+        #leitor-container svg path { stroke: var(--accent-tamar) !important; transition: stroke 0.3s ease; }
+        #leitor-container.glow-success svg path { stroke: var(--success) !important; }
+        #leitor-container.glow-error svg path { stroke: var(--error) !important; }
+        /* ======================================================= */
+
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-12px); } 50% { transform: translateX(12px); } 75% { transform: translateX(-12px); } }
         .shake-animation { animation: shake 0.4s ease-in-out; }
 
@@ -159,13 +164,12 @@
         let rotaDoGoogle = null; 
         let isProcessing = false; 
         let passoAtivoDaCamera = "ENDERECO"; 
-        let origemAtual = "PICKING"; // <-- Controle do Canal!
+        let origemAtual = "PICKING"; 
 
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
                 rotaDoGoogle = event.source; 
                 
-                // Define quem abriu a câmera para responder no canal certo
                 if(event.data.contexto && event.data.contexto.origem) {
                     origemAtual = event.data.contexto.origem;
                 } else {
@@ -231,7 +235,6 @@
                         document.getElementById('scan-laser').style.display = 'none';
 
                         if (rotaDoGoogle) {
-                            // CANAL EXCLUSIVO: Responde apenas para quem chamou
                             if (origemAtual === "PUTAWAY") {
                                 rotaDoGoogle.postMessage({ acao: "QR_LIDO_PUTAWAY", codigo: codigoLido }, "*");
                             } else {
