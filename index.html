@@ -80,7 +80,6 @@
         .endereco-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         #scan-endereco { font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 2px; transition: all 0.3s ease; }
 
-        /* AQUI É A MÁGICA DA FONTE PEQUENA! */
         .endereco-aguardando {
             font-size: 11px !important;
             font-weight: 600 !important;
@@ -160,10 +159,19 @@
         let rotaDoGoogle = null; 
         let isProcessing = false; 
         let passoAtivoDaCamera = "ENDERECO"; 
+        let origemAtual = "PICKING"; // <-- Controle do Canal!
 
         window.addEventListener("message", function(event) {
             if (event.data && event.data.acao === "ABRIR_CAMERA") {
                 rotaDoGoogle = event.source; 
+                
+                // Define quem abriu a câmera para responder no canal certo
+                if(event.data.contexto && event.data.contexto.origem) {
+                    origemAtual = event.data.contexto.origem;
+                } else {
+                    origemAtual = "PICKING";
+                }
+
                 atualizarTextos(event.data.contexto);
                 abrirCameraGitHub();
             } 
@@ -189,7 +197,6 @@
                 let elEnd = document.getElementById('scan-endereco');
                 elEnd.innerText = ctx.endereco;
                 
-                // Agora é blindado! Se a palavra "aguardando" ou "---" estiver lá, ele vira texto pequeno.
                 if (ctx.endereco.toLowerCase().includes("aguardando") || ctx.endereco.includes("---")) {
                     elEnd.classList.add('endereco-aguardando');
                 } else {
@@ -224,7 +231,12 @@
                         document.getElementById('scan-laser').style.display = 'none';
 
                         if (rotaDoGoogle) {
-                            rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
+                            // CANAL EXCLUSIVO: Responde apenas para quem chamou
+                            if (origemAtual === "PUTAWAY") {
+                                rotaDoGoogle.postMessage({ acao: "QR_LIDO_PUTAWAY", codigo: codigoLido }, "*");
+                            } else {
+                                rotaDoGoogle.postMessage({ acao: "QR_LIDO", codigo: codigoLido }, "*");
+                            }
                         }
                     },
                     function(erro) {}
