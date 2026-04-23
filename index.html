@@ -90,14 +90,6 @@
         .glow-success { box-shadow: 0 0 25px 5px rgba(34, 197, 94, 0.4) !important; border-color: var(--success) !important; }
         .glow-error { box-shadow: 0 0 25px 5px rgba(239, 68, 68, 0.4) !important; border-color: var(--error) !important; }
         
-        /* ======================================================= */
-        /* MÁGICA: SEQUESTRANDO A COR DAS 4 BORDAS DA CÂMERA       */
-        /* ======================================================= */
-        #leitor-container svg path { stroke: var(--accent-tamar) !important; transition: stroke 0.3s ease; }
-        #leitor-container.glow-success svg path { stroke: var(--success) !important; }
-        #leitor-container.glow-error svg path { stroke: var(--error) !important; }
-        /* ======================================================= */
-
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-12px); } 50% { transform: translateX(12px); } 75% { transform: translateX(-12px); } }
         .shake-animation { animation: shake 0.4s ease-in-out; }
 
@@ -107,6 +99,36 @@
             transition: border-color 0.3s, box-shadow 0.3s;
         }
         #leitor-qr { width: 100%; height: 100%; }
+
+        /* ========================================================================= */
+        /* HACK ANTIBUG: MATA O "SCANNER PAUSED" E O VERDE FALSO DA BIBLIOTECA       */
+        /* ========================================================================= */
+        #leitor-qr { font-size: 0 !important; color: transparent !important; } /* Desintegra o texto SCANNER PAUSED */
+        #leitor-qr svg { display: none !important; } /* Apaga as bordas rebeldes nativas */
+
+        /* DESENHA NOSSAS PRÓPRIAS BORDAS BLINDADAS */
+        #custom-frame {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; pointer-events: none; z-index: 10;
+        }
+        #custom-frame::before, #custom-frame::after, #custom-frame-inner::before, #custom-frame-inner::after {
+            content: ''; position: absolute; width: 40px; height: 40px; 
+            border-color: var(--accent-tamar); border-style: solid; transition: border-color 0.3s ease;
+        }
+        #custom-frame::before { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 12px; }
+        #custom-frame::after { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 12px; }
+        #custom-frame-inner { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        #custom-frame-inner::before { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 12px; }
+        #custom-frame-inner::after { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 12px; }
+
+        /* As nossas bordas só mudam de cor sob o NOSSO comando! */
+        .glow-success #custom-frame::before, .glow-success #custom-frame::after,
+        .glow-success #custom-frame-inner::before, .glow-success #custom-frame-inner::after { border-color: var(--success) !important; }
+        
+        .glow-error #custom-frame::before, .glow-error #custom-frame::after,
+        .glow-error #custom-frame-inner::before, .glow-error #custom-frame-inner::after { border-color: var(--error) !important; }
+        /* ========================================================================= */
+
         .scan-line {
             position: absolute; left: 5%; width: 90%; height: 2px; background: var(--accent-tamar); 
             box-shadow: 0 0 15px 2px var(--accent-tamar); animation: laser-scan 2s linear infinite; opacity: 0.8;
@@ -149,6 +171,7 @@
         <div id="scanner-card">
             <div id="leitor-container">
                 <div id="leitor-qr"></div>
+                <div id="custom-frame"><div id="custom-frame-inner"></div></div>
                 <div class="scan-line" id="scan-laser"></div>
             </div>
             <div id="scanner-feedback">Código Inválido</div>
